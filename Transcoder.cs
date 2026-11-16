@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 public enum JobState { Pending, Skipped, Working, Done, Failed }
 
@@ -185,8 +185,8 @@ public sealed class Transcoder
 
         var outDir = Path.GetDirectoryName(finalPath)!;
         Directory.CreateDirectory(outDir);
-        var tempOut = Path.Combine(outDir, Path.GetFileNameWithoutExtension(finalPath) + ".plexhevc-tmp" + outExt);
-        var work = Path.Combine(Path.GetTempPath(), "PlexHevc", Guid.NewGuid().ToString("N"));
+        var tempOut = Path.Combine(outDir, Path.GetFileNameWithoutExtension(finalPath) + ".any2hevc-tmp" + outExt);
+        var work = Path.Combine(Path.GetTempPath(), Tools.AppName, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(work);
 
         _log($"{Path.GetFileName(job.Path)}: {m.VideoCodec} {m.Resolution}, " +

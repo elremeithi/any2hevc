@@ -1,4 +1,4 @@
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>
 /// Tray icon: shows what the app is doing (a pie that fills while encoding, a spinner while testing quality, a dot
@@ -20,7 +20,7 @@ public sealed partial class MainForm
 
     static Icon LoadAppIcon()
     {
-        using var s = typeof(MainForm).Assembly.GetManifestResourceStream("PlexHevc.ico");
+        using var s = typeof(MainForm).Assembly.GetManifestResourceStream("any2hevc.ico");
         return s is null ? SystemIcons.Application : new Icon(s);
     }
 
@@ -93,7 +93,7 @@ public sealed partial class MainForm
             IconArt.Badge.Watching => "Watching for new files",
             _ => "Idle",
         };
-        text = "Plex HEVC: " + text;
+        text = "any2hevc: " + text;
         _tray.Text = text.Length > 127 ? text[..126] + "…" : text; // the tooltip limit
     }
 
@@ -114,7 +114,7 @@ public sealed partial class MainForm
         {
             _trayAlert = failed > 0 ? IconArt.Badge.Error : IconArt.Badge.Done;
             if (!stopped)
-                _tray.ShowBalloonTip(5000, "Plex HEVC", $"Queue finished: {encoded} encoded" + (failed > 0 ? $", {failed} failed." : "."),
+                _tray.ShowBalloonTip(5000, "any2hevc", $"Queue finished: {encoded} encoded" + (failed > 0 ? $", {failed} failed." : "."),
                     failed > 0 ? ToolTipIcon.Warning : ToolTipIcon.Info);
         }
         UpdateTray();
@@ -125,7 +125,7 @@ public sealed partial class MainForm
         Hide();
         if (_toldAboutTray) return;
         _toldAboutTray = true;
-        _tray.ShowBalloonTip(4000, "Plex HEVC is still running",
+        _tray.ShowBalloonTip(4000, "any2hevc is still running",
             "Encoding and watch mode carry on in the background. Click the tray icon to open it; right-click > Exit to quit.",
             ToolTipIcon.Info);
     }
@@ -155,7 +155,7 @@ public sealed partial class MainForm
             ? new("Turn off watch mode", CmdWatchOff, "Stop encoding new files automatically")
             : new("Turn on watch mode", CmdWatchOn, "Encode new files automatically as they arrive"),
         null,
-        new("Exit", CmdExit, "Quit Plex HEVC (asks first if an encode is running)"),
+        new("Exit", CmdExit, "Quit any2hevc (asks first if an encode is running)"),
     });
 
     public async Task RunCommandAsync(string command)

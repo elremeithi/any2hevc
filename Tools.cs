@@ -2,11 +2,20 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>Finds and runs ffmpeg / ffprobe, plus a few Windows helpers.</summary>
 static class Tools
 {
+    /// <summary>The app's name: window title, folders under %APPDATA% / %LOCALAPPDATA% / %TEMP%, Start menu entry.</summary>
+    public const string AppName = "any2hevc";
+    /// <summary>What it was called before; its leftovers are moved over or cleaned up.</summary>
+    public const string OldAppName = "PlexHevc";
+
+    /// <summary>A separate data folder (e.g. a test copy beside the real one): ANY2HEVC_DATA, or the old PLEXHEVC_DATA.</summary>
+    public static string? DataOverride =>
+        new[] { "ANY2HEVC_DATA", "PLEXHEVC_DATA" }.Select(Environment.GetEnvironmentVariable).FirstOrDefault(v => v is { Length: > 0 });
+
     public static string? FFmpeg { get; private set; }
     public static string? FFprobe { get; private set; }
 
@@ -25,7 +34,8 @@ static class Tools
 
     /// <summary>
     /// Brotli-compressed ffmpeg.exe / ffprobe.exe ship inside the exe (see the csproj). They are unpacked once per
-    /// app build to %LOCALAPPDATA%\PlexHevc\ffmpeg\&lt;build id&gt;, and older builds' copies are removed.
+    /// app build to %LOCALAPPDATA%\any2hevc\ffmpeg\&lt;build id&gt;, and older builds' copies are removed (also the
+    /// ones under the app's old name, %LOCALAPPDATA%\PlexHevc).
     /// </summary>
     static string? UnpackEmbedded()
     {
@@ -33,7 +43,10 @@ static class Tools
         var names = asm.GetManifestResourceNames().Where(n => n.EndsWith(".br")).ToList();
         if (names.Count == 0) return null; // built without them
 
-        var parent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PlexHevc", "ffmpeg");
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var parent = Path.Combine(local, AppName, "ffmpeg");
+        if (Directory.Exists(Path.Combine(local, OldAppName)))
+            try { Directory.Delete(Path.Combine(local, OldAppName), true); } catch { /* an old copy is still running */ }
         var dir = Path.Combine(parent, asm.ManifestModule.ModuleVersionId.ToString("N"));
         foreach (var name in names)
         {
@@ -135,22 +148,26 @@ static class Tools
     /// <summary>
     /// Keeps a Start menu shortcut pointing at this exe, so the app shows up in Start search and can be pinned to the
     /// taskbar from there (Windows lets only the user pin; an exe on its own offers no "Pin to taskbar"). Updated
-    /// when the exe moves. Test copies (PLEXHEVC_DATA) leave it alone.
+    /// when the exe moves. The entry from the app's old name is removed. Test copies (ANY2HEVC_DATA) leave it alone.
     /// </summary>
     public static void EnsureStartMenuShortcut()
     {
-        if (Environment.GetEnvironmentVariable("PLEXHEVC_DATA") is { Length: > 0 }) return;
+        if (DataOverride is not null) return;
         try
         {
+            var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+            var oldLnk = Path.Combine(programs, "Plex HEVC Re-encoder.lnk");
+            if (File.Exists(oldLnk)) File.Delete(oldLnk);
+
             var exe = Environment.ProcessPath!;
-            var lnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Plex HEVC Re-encoder.lnk");
+            var lnk = Path.Combine(programs, AppName + ".lnk");
             dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
             dynamic link = shell.CreateShortcut(lnk);
             if (File.Exists(lnk) && string.Equals((string)link.TargetPath, exe, StringComparison.OrdinalIgnoreCase)) return;
             link.TargetPath = exe;
             link.WorkingDirectory = Path.GetDirectoryName(exe);
             link.IconLocation = exe + ",0";
-            link.Description = "Re-encode a Plex library to HEVC";
+            link.Description = "Re-encode a video library to HEVC";
             link.Save();
         }
         catch { /* no Start menu entry; the app works the same */ }

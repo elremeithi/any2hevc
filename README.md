@@ -1,6 +1,6 @@
-# Plex HEVC Re-encoder
+# any2hevc
 
-Re-encodes a whole Plex library to HEVC (H.265, 8-bit Main profile, plays on every HEVC device), choosing **per file** the smallest size that still looks
+Re-encodes a whole video library (Plex, Jellyfin, Emby, or plain folders) to HEVC (H.265, 8-bit Main profile, plays on every HEVC device), choosing **per file** the smallest size that still looks
 like the source.
 
 ## How it picks the bitrate
@@ -20,8 +20,9 @@ For every file it:
 5. Checks the result (HEVC, same length, same audio tracks), then swaps it into the library.
 
 HEVC files made elsewhere (remuxes, web rips, 10-bit encodes) are converted too; untick *Re-encode HEVC files
-from other sources too* to leave them alone. Every encode is tagged `PLEXHEVC` in the container, and files that
-carry it, or that the history lists as done, are never re-encoded. AV1/VP9 files and clips under a
+from other sources too* to leave them alone. Every encode is tagged `ANY2HEVC` in the container, and files that
+carry it (or `PLEXHEVC`, from when the app was called PlexHevc), or that the history lists as done, are never
+re-encoded. AV1/VP9 files and clips under a
 minute are skipped. HDR and Dolby Vision files are skipped too, because 8-bit output can't carry HDR. 10-bit SDR
 sources are dithered down to 8-bit. Interlaced sources are deinterlaced with bwdif.
 
@@ -62,8 +63,8 @@ there is a lot to get through.
 
 ## Originals
 
-- **Replace, move originals to backup folder** (default): the backup folder mirrors the library structure. Check a
-  few files in Plex, then delete the backups yourself.
+- **Replace, move originals to backup folder** (default): the backup folder mirrors the library structure. Play a
+  few converted files, then free the space with *Delete backups…* (below).
 - **Revert…** undoes it: every converted file whose original is in the backup folder is deleted, and the original
   is moved back to where it was (with its old name and extension). It shows the count and sizes and asks first.
   A converted file is only deleted when it is still exactly the file the app wrote and the backup is exactly the
@@ -107,7 +108,7 @@ Hover for the current file and percentage. **Closing the window hides it to the 
 carry on. Click the icon to open it again; right-click for Start, Stop after this file, Watch for new files and
 **Exit**. Starting the app again while it's in the tray just brings the window back.
 
-The app keeps a *Plex HEVC Re-encoder* shortcut in the Start menu, pointing at wherever the exe is. To pin it,
+The app keeps an *any2hevc* shortcut in the Start menu, pointing at wherever the exe is. To pin it,
 search for it in Start, right-click and choose *Pin to taskbar*, or right-click its taskbar button while it runs.
 The pinned button opens the app, or brings it back from the tray.
 
@@ -127,25 +128,25 @@ the window hidden, Windows shows a notification.
 - Settings, results and the log are kept **next to the exe** (`settings.json`, `history.json`, `log.txt`), so the
   folder can be backed up or moved to another PC as a whole. Results make rescans quick, and no file is tested
   twice. Right-click a file to skip it or queue it again. If the exe's folder can't be written to (e.g. Program
-  Files), they go to `%APPDATA%\PlexHevc` instead. Older versions kept them there, and the files are moved next to
-  the exe on first start.
+  Files), they go to `%APPDATA%\any2hevc` instead. Older versions kept them in `%APPDATA%\PlexHevc`; those files
+  are moved over on first start.
 - With a Plex URL and token set, the app can ask Plex to rescan its libraries when the queue finishes.
-- Set the `PLEXHEVC_DATA` environment variable to a folder to run a separate copy with its own settings and
+- Set the `ANY2HEVC_DATA` environment variable (the old `PLEXHEVC_DATA` still works) to a folder to run a separate copy with its own settings and
   history, e.g. for testing.
 
 ## Running on another PC
 
-`publish\PlexHevc.exe` is all that's needed: copy it anywhere and run it. It contains the .NET runtime and
+`publish\any2hevc.exe` is all that's needed: copy it anywhere and run it. It contains the .NET runtime and
 ffmpeg 7.0.1 (gyan.dev full build with libx265, hevc_nvenc and libvmaf, including the VMAF models). On first start
-ffmpeg/ffprobe are unpacked once to `%LOCALAPPDATA%\PlexHevc\ffmpeg` (about 280 MB, a couple of seconds). A new
-version of the app replaces that copy.
+ffmpeg/ffprobe are unpacked once to `%LOCALAPPDATA%\any2hevc\ffmpeg` (about 280 MB, a couple of seconds). A new
+version of the app replaces that copy; the old `%LOCALAPPDATA%\PlexHevc` copy is removed.
 
 NVENC needs an NVIDIA GPU (GTX 10-series or newer) and its driver; on other PCs the app says so when *Start* is
 pressed, so pick x265 there. Copy the whole folder (exe plus `settings.json` / `history.json`) to carry on where you
 stopped. Keep the library on the same drive letter, since paths are stored in full. Even without history, files
-the app already encoded carry a `PLEXHEVC` tag and are never encoded again.
+the app already encoded carry an `ANY2HEVC` (or older `PLEXHEVC`) tag and are never encoded again.
 
-To use a different ffmpeg, put `ffmpeg.exe` and `ffprobe.exe` next to `PlexHevc.exe`; they take priority.
+To use a different ffmpeg, put `ffmpeg.exe` and `ffprobe.exe` next to `any2hevc.exe`; they take priority.
 
 ## Build
 

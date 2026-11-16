@@ -1,6 +1,6 @@
 using System.IO.Pipes;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 static class Program
 {
@@ -10,8 +10,8 @@ static class Program
         // Taskbar jump-list tasks start the exe with --start, --scan, etc.; a plain start means "show".
         var command = args.FirstOrDefault(a => a.StartsWith("--"))?[2..].ToLowerInvariant() ?? MainForm.CmdShow;
 
-        // One instance per data folder (PLEXHEVC_DATA lets a test copy run beside the real one).
-        var key = "PlexHevc_" + AppSettings.DataDir.ToLowerInvariant().Replace('\\', '_');
+        // One instance per data folder (ANY2HEVC_DATA lets a test copy run beside the real one).
+        var key = Tools.AppName + "_" + AppSettings.DataDir.ToLowerInvariant().Replace('\\', '_');
         using var mutex = new Mutex(true, key, out bool firstInstance);
         if (!firstInstance)
         {
@@ -26,9 +26,9 @@ static class Program
         Tools.Prepare();
         if (Tools.FFmpeg is null || Tools.FFprobe is null)
         {
-            MessageBox.Show("The built-in ffmpeg could not be unpacked to %LOCALAPPDATA%\\PlexHevc, and ffmpeg.exe / " +
+            MessageBox.Show($"The built-in ffmpeg could not be unpacked to %LOCALAPPDATA%\\{Tools.AppName}, and ffmpeg.exe / " +
                 "ffprobe.exe were not found next to this app or on PATH.\n\n" +
-                "Free some disk space, or install them with:  winget install Gyan.FFmpeg", "Plex HEVC",
+                "Free some disk space, or install them with:  winget install Gyan.FFmpeg", Tools.AppName,
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }

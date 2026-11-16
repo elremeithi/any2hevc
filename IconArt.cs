@@ -1,7 +1,7 @@
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>
 /// The app's icon, drawn in code so the tray can show the same artwork with a status badge. Also writes the

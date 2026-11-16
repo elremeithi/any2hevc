@@ -1,4 +1,4 @@
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>
 /// Undoes encodes made in backup mode: deletes the HEVC file and moves the original back from the backup folder.
@@ -97,7 +97,7 @@ static class Revert
     /// </summary>
     public static void Run(Item item, string backupRoot)
     {
-        var aside = item.Converted + ".plexhevc-revert";
+        var aside = item.Converted + ".any2hevc-revert";
         File.Move(item.Converted, aside);
         try
         {

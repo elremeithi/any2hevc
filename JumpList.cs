@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>
 /// The menu shown when right-clicking the app's taskbar button (also when it's pinned and not running). Each task

@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>What ffprobe says about a file; cached in the history so rescans don't re-probe.</summary>
 public sealed class MediaInfo
@@ -30,7 +30,9 @@ public sealed class MediaInfo
     /// <summary>Carries this app's container tag, i.e. it is one of our own encodes.</summary>
     public bool EncodedByUs { get; set; }
     /// <summary>Container tag written on every encode (value: the CRF / CQ used).</summary>
-    public const string OurTag = "PLEXHEVC";
+    public const string OurTag = "ANY2HEVC";
+    /// <summary>All tags that mark our encodes: this app was called PlexHevc before, and its encodes say so.</summary>
+    static readonly string[] OurTags = { OurTag, "PLEXHEVC" };
 
     public bool IsHdr => ColorTransfer is "smpte2084" or "arib-std-b67";
     public string Resolution => Width == 0 ? "" : $"{Width}x{Height}";
@@ -49,7 +51,7 @@ public sealed class MediaInfo
             m.Duration = Num(fmt, "duration");
             m.Size = (long)Num(fmt, "size");
             if (fmt.TryGetProperty("tags", out var ftags))
-                m.EncodedByUs = ftags.EnumerateObject().Any(t => t.Name.Equals(OurTag, StringComparison.OrdinalIgnoreCase));
+                m.EncodedByUs = ftags.EnumerateObject().Any(t => OurTags.Contains(t.Name, StringComparer.OrdinalIgnoreCase));
         }
 
         bool haveVideo = false;

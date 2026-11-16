@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 public enum Outcome
 {
@@ -68,7 +68,7 @@ public sealed class History
     {
         lock (_lock)
         {
-            var done = Files.Values.Where(r => r.Outcome == PlexHevc.Outcome.Done && r.OriginalSize is not null && r.NewSize is not null).ToList();
+            var done = Files.Values.Where(r => r.Outcome == Any2Hevc.Outcome.Done && r.OriginalSize is not null && r.NewSize is not null).ToList();
             return (done.Count, done.Sum(r => r.OriginalSize!.Value - r.NewSize!.Value));
         }
     }
@@ -77,7 +77,7 @@ public sealed class History
     public List<(string Path, FileRecord Record)> Done()
     {
         lock (_lock)
-            return Files.Where(f => f.Value.Outcome == PlexHevc.Outcome.Done).Select(f => (f.Key, f.Value)).ToList();
+            return Files.Where(f => f.Value.Outcome == Any2Hevc.Outcome.Done).Select(f => (f.Key, f.Value)).ToList();
     }
 
     public static History Load()

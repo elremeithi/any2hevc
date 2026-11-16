@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>Dark colors for the WinForms window, its list, the tray menu and the title bar.</summary>
 static class DarkTheme

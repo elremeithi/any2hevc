@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 public enum EncoderKind { X265, Nvenc }
 
@@ -66,31 +66,42 @@ public sealed class AppSettings
 
     /// <summary>
     /// The exe's own folder, so settings and history travel with it (e.g. survive reinstalling Windows). Falls back to
-    /// %APPDATA%\PlexHevc when that folder isn't writable (Program Files). PLEXHEVC_DATA overrides both, e.g. for testing.
+    /// %APPDATA%\any2hevc when that folder isn't writable (Program Files). ANY2HEVC_DATA overrides both, e.g. for testing.
     /// </summary>
     static string PickDataDir()
     {
-        if (Environment.GetEnvironmentVariable("PLEXHEVC_DATA") is { Length: > 0 } custom) return custom;
-        var appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PlexHevc");
+        if (Tools.DataOverride is { } custom) return custom;
+        var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var appData = Path.Combine(roaming, Tools.AppName);
+        var oldAppData = Path.Combine(roaming, Tools.OldAppName); // when the app was called PlexHevc
         var exeDir = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
-        if (!CanWrite(exeDir)) return appData;
+        var dir = CanWrite(exeDir) ? exeDir : appData;
 
-        // Earlier versions kept everything in %APPDATA%: bring it over once.
-        foreach (var name in DataFiles)
+        // Earlier versions kept everything in %APPDATA%\PlexHevc: bring it over once.
+        foreach (var from in new[] { appData, oldAppData })
         {
-            var from = Path.Combine(appData, name);
-            var to = Path.Combine(exeDir, name);
-            try { if (File.Exists(from) && !File.Exists(to)) File.Move(from, to); }
-            catch { /* left where it was; this file starts fresh */ }
+            if (from.Equals(dir, StringComparison.OrdinalIgnoreCase)) continue;
+            foreach (var name in DataFiles)
+            {
+                var src = Path.Combine(from, name);
+                var dst = Path.Combine(dir, name);
+                try
+                {
+                    if (!File.Exists(src) || File.Exists(dst)) continue;
+                    Directory.CreateDirectory(dir);
+                    File.Move(src, dst);
+                }
+                catch { /* left where it was; this file starts fresh */ }
+            }
         }
-        return exeDir;
+        return dir;
     }
 
     static bool CanWrite(string dir)
     {
         try
         {
-            var probe = Path.Combine(dir, $".plexhevc-write-test-{Environment.ProcessId}");
+            var probe = Path.Combine(dir, $".any2hevc-write-test-{Environment.ProcessId}");
             File.WriteAllText(probe, "");
             File.Delete(probe);
             return true;

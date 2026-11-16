@@ -1,4 +1,4 @@
-namespace PlexHevc;
+namespace Any2Hevc;
 
 public sealed partial class MainForm : Form
 {
@@ -80,7 +80,7 @@ public sealed partial class MainForm : Form
     {
         View = View.Details, FullRowSelect = true, Dock = DockStyle.Fill, HideSelection = false, ShowItemToolTips = true,
     };
-    readonly Label _current = new() { AutoSize = true, Text = "Add your Plex library folders (or drag them onto this window), then Scan.", Margin = new Padding(3, 6, 3, 3) };
+    readonly Label _current = new() { AutoSize = true, Text = "Add your video library folders (or drag them onto this window), then Scan.", Margin = new Padding(3, 6, 3, 3) };
     readonly ProgressBar _progress = new() { Dock = DockStyle.Fill, Maximum = 1000, Height = 14 };
     readonly TextBox _log = new()
     {
@@ -94,7 +94,7 @@ public sealed partial class MainForm : Form
         _settings = settings;
         _history = history;
 
-        Text = "Plex HEVC Re-encoder";
+        Text = "any2hevc";
         Font = new Font("Segoe UI", 9.5f);
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
@@ -173,7 +173,7 @@ public sealed partial class MainForm : Form
         var remove = new Button { Text = "Remove", AutoSize = true };
         add.Click += (_, _) =>
         {
-            using var dlg = new FolderBrowserDialog { Description = "Pick a Plex library folder (movies, TV…)", UseDescriptionForTitle = true };
+            using var dlg = new FolderBrowserDialog { Description = "Pick a video library folder (movies, TV…)", UseDescriptionForTitle = true };
             if (dlg.ShowDialog(this) == DialogResult.OK) AddFolders(new[] { dlg.SelectedPath });
         };
         remove.Click += (_, _) =>
@@ -524,7 +524,8 @@ public sealed partial class MainForm : Form
 
     static bool IsLibraryVideo(string path, List<string> excluded) =>
         VideoExtensions.Contains(Path.GetExtension(path))
-        && !path.Contains(".plexhevc-tmp", StringComparison.OrdinalIgnoreCase)
+        && !path.Contains(".any2hevc-tmp", StringComparison.OrdinalIgnoreCase)
+        && !path.Contains(".plexhevc-tmp", StringComparison.OrdinalIgnoreCase) // left by the app's old name
         && !excluded.Any(e => IsUnder(path, e));
 
     static bool IsUnder(string path, string folder)
@@ -1181,7 +1182,7 @@ public sealed partial class MainForm : Form
                       "• Revert is no longer possible for these files.\n";
             if (plan.Skipped.Count > 0)
                 msg += $"\n{plan.Skipped.Count} other converted files have no backup that can safely be deleted; they are left alone (details go to the log).\n";
-            msg += "\nCheck a few converted files in Plex before doing this.";
+            msg += "\nPlay a few converted files before doing this.";
             if (MessageBox.Show(this, msg, "Delete backups", MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
                     MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                 return;

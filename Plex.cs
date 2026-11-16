@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace PlexHevc;
+namespace Any2Hevc;
 
 /// <summary>Talks to Plex Media Server so it picks up replaced files without waiting for its next scan.</summary>
 static class Plex
