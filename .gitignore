@@ -1,0 +1,9 @@
+# Build output
+bin/
+obj/
+publish/
+publish-x86/
+.vs/
+*.user
+# Binaries (download separately; too large or third-party)
+*.exe

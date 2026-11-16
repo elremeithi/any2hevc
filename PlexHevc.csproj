@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>PlexHevc</AssemblyName>
+    <Product>Plex HEVC Re-encoder</Product>
+    <Version>1.0.0</Version>
+    <!-- Drawn by IconArt.SaveIco; the window loads the same file from the embedded copy. -->
+    <ApplicationIcon>PlexHevc.ico</ApplicationIcon>
+
+    <!-- One self-contained exe that runs on a bare Windows PC: .NET and ffmpeg/ffprobe are inside it. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+
+    <!-- ffmpeg.exe / ffprobe.exe to embed (a build with libx265, hevc_nvenc and libvmaf, e.g. gyan.dev "full"). -->
+    <FFmpegDir Condition="'$(FFmpegDir)' == ''">$(MSBuildProjectDirectory)\ffmpeg</FFmpegDir>
+    <FFmpegPackDir>$(BaseIntermediateOutputPath)ffmpeg\</FFmpegPackDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FFmpegTool Include="$(FFmpegDir)\ffmpeg.exe;$(FFmpegDir)\ffprobe.exe" />
+    <None Remove="ffmpeg\**" />
+    <EmbeddedResource Include="PlexHevc.ico" LogicalName="PlexHevc.ico" />
+    <EmbeddedResource Include="$(FFmpegDir)\LICENSE" LogicalName="ffmpeg-LICENSE.txt" Condition="Exists('$(FFmpegDir)\LICENSE')" />
+  </ItemGroup>
+
+  <UsingTask TaskName="BrotliPack" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <OutputDir ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.IO.Compression" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Directory.CreateDirectory(OutputDir);
+        foreach (var f in Files)
+        {
+            var src = f.GetMetadata("FullPath");
+            var dst = Path.Combine(OutputDir, Path.GetFileName(src) + ".br");
+            using (var input = File.OpenRead(src))
+            using (var output = File.Create(dst))
+            // BrotliStream isn't in netstandard, which inline tasks compile against: take it from the running runtime.
+            using (var br = (Stream)Activator.CreateInstance(
+                Type.GetType("System.IO.Compression.BrotliStream, System.IO.Compression.Brotli", true),
+                output, CompressionLevel.Optimal))
+                input.CopyTo(br);
+            Log.LogMessage(MessageImportance.High, "Packed " + Path.GetFileName(src) + " -> " + (new FileInfo(dst).Length >> 20) + " MB");
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <!-- Compresses the tools only when they change. -->
+  <Target Name="PackFFmpeg" BeforeTargets="PrepareForBuild" Inputs="@(FFmpegTool)" Outputs="@(FFmpegTool->'$(FFmpegPackDir)%(Filename)%(Extension).br')">
+    <Error Condition="!Exists('$(FFmpegDir)\ffmpeg.exe') Or !Exists('$(FFmpegDir)\ffprobe.exe')"
+           Text="Put ffmpeg.exe and ffprobe.exe in $(FFmpegDir) (or pass -p:FFmpegDir=...) so they can be embedded." />
+    <BrotliPack Files="@(FFmpegTool)" OutputDir="$(FFmpegPackDir)" />
+  </Target>
+
+  <Target Name="EmbedFFmpeg" AfterTargets="PackFFmpeg">
+    <ItemGroup>
+      <EmbeddedResource Include="@(FFmpegTool->'$(FFmpegPackDir)%(Filename)%(Extension).br')" LogicalName="%(Filename)%(Extension).br" WithCulture="false" Type="Non-Resx" />
+    </ItemGroup>
+  </Target>
+
+</Project>
